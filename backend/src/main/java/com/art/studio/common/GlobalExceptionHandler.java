@@ -47,14 +47,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * 并发冲突：同一课次正在被另一个请求处理（行锁等待超时）。客户端重试即可，
-     * 后到的请求会走幂等分支拿到同一份结果，不会产生重复数据。
+     * 并发冲突：同一学员 / 课次正在被另一个请求处理（行锁等待超时）。
+     * 课后记录并发、课次取消与重排并发都会走到这里；客户端重试即可，
+     * 后到的请求会基于最终状态走幂等分支 / 重新校验，不会产生重复数据或双占时段。
      */
     @ExceptionHandler({CannotAcquireLockException.class, PessimisticLockException.class,
             LockTimeoutException.class})
     public ResponseEntity<ApiResponse<Void>> handleLock(Exception e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ApiResponse.fail("该课次的课后记录正在被另一个请求处理，请稍后重试（不会产生重复记录）"));
+                .body(ApiResponse.fail("该学员的排课 / 课次操作正在被另一个请求处理，请稍后重试（系统按最终状态裁决，不会产生重复排课或重复记录）"));
     }
 
     /**

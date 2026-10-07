@@ -3,6 +3,7 @@ package com.art.studio.controller;
 import java.util.List;
 
 import com.art.studio.common.ApiResponse;
+import com.art.studio.dto.ScheduleActionResult;
 import com.art.studio.entity.CourseSchedule;
 import com.art.studio.service.CourseScheduleService;
 
@@ -33,12 +34,15 @@ public class CourseScheduleController {
 
     @PostMapping
     public ApiResponse<CourseSchedule> create(@RequestBody CourseSchedule input) {
-        return ApiResponse.success(service.create(input));
+        ScheduleActionResult result = service.createWithResult(input);
+        return ApiResponse.success(result.getMessage(), result.getSchedule());
     }
 
     @PostMapping("/{id}/cancel")
     public ApiResponse<CourseSchedule> cancel(@PathVariable Long id) {
-        return ApiResponse.success(service.cancel(id));
+        // 幂等：重复 / 并发取消返回同一条「已取消」课次与说明，前端据此稳定刷新
+        ScheduleActionResult result = service.cancel(id);
+        return ApiResponse.success(result.getMessage(), result.getSchedule());
     }
 
     @PostMapping("/{id}/checkin")

@@ -62,7 +62,11 @@ function resetFilters() {
 }
 
 async function cancel(row) {
-  try { await api.cancelCourseSchedule(row.id); ElMessage.success('已取消'); await load(); emit('changed') } catch (e) { ElMessage.error(e.message) }
+  try {
+    const body = await api.cancelCourseSchedule(row.id)
+    ElMessage.success(body.message || '已取消')
+    await load(); emit('changed')
+  } catch (e) { ElMessage.error(e.message) }
 }
 async function checkin(row) {
   try { await api.checkinCourseSchedule(row.id); ElMessage.success('已签到上课'); await load(); emit('changed') } catch (e) { ElMessage.error(e.message) }

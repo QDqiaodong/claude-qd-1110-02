@@ -52,7 +52,7 @@ export default {
     studentId ? { studentId, ...(status ? { status } : {}) }
               : (status ? { status } : {})))),
   createCourseSchedule: (d) => call(http.post('/course-schedules', d)),
-  cancelCourseSchedule: (id) => call(http.post(`/course-schedules/${id}/cancel`)),
+  cancelCourseSchedule: (id) => callFull(http.post(`/course-schedules/${id}/cancel`)),
   checkinCourseSchedule: (id) => call(http.post(`/course-schedules/${id}/checkin`)),
 
   // ---------------- 课后成果记录（按课次幂等） ----------------

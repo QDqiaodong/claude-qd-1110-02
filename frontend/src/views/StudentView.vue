@@ -83,9 +83,20 @@ async function removeStudent(row) {
 }
 
 async function openDrawer(row) {
+  // 以服务端最新数据为准：学员状态（在读/休学/结业）与课次列表、记录一并重拉，
+  // 保证列表、抽屉、刷新后看到的状态始终一致
   currentStudent.value = row
   drawerVisible.value = true
-  await loadSchedules(row.id)
+  await Promise.all([refreshCurrentStudent(row.id), loadSchedules(row.id)])
+}
+
+async function refreshCurrentStudent(id) {
+  try {
+    const fresh = await api.listStudents()
+    students.value = fresh
+    const latest = fresh.find((s) => s.id === id)
+    if (latest) currentStudent.value = latest
+  } catch (e) { /* 学员信息刷新失败不阻断抽屉 */ }
 }
 
 async function loadSchedules(studentId) {
@@ -122,7 +133,11 @@ async function saveSchedule() {
 }
 
 async function cancelSchedule(row) {
-  try { await api.cancelCourseSchedule(row.id); ElMessage.success('已取消'); await loadSchedules(currentStudent.value.id); emit('changed') } catch (e) { ElMessage.error(e.message) }
+  try {
+    const body = await api.cancelCourseSchedule(row.id)
+    ElMessage.success(body.message || '已取消')
+    await loadSchedules(currentStudent.value.id); emit('changed')
+  } catch (e) { ElMessage.error(e.message) }
 }
 async function checkinSchedule(row) {
   try { await api.checkinCourseSchedule(row.id); ElMessage.success('已签到上课'); await loadSchedules(currentStudent.value.id); emit('changed') } catch (e) { ElMessage.error(e.message) }
