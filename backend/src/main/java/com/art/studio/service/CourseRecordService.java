@@ -24,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 课后成果记录闭环。
  *
  * 并发收口策略（三重防线）：
- *   1. 所有写操作都在事务内先对课次行加写锁（PESSIMISTIC_WRITE），同课次请求在 DB 层串行；
+ *   1. 所有写操作都在事务内按固定顺序「学员行 → 课次行」加写锁（PESSIMISTIC_WRITE），
+ *      与排课 / 取消 / 签到同序，同学员的并发写在 DB 层串行，杜绝交叉死锁；
  *   2. 串行区内做「查记录 → 校验状态机 → 落库」，重复请求走幂等分支返回同一结果；
  *   3. course_record.schedule_id 唯一索引兜底，任何漏网并发在落库时被挡下并转成业务提示。
  *
@@ -232,11 +233,21 @@ public class CourseRecordService {
 
     // ---------------------------------------------------------------- 校验与装配
 
-    /** 锁课次行：把同课次的并发写请求在数据库层串行化。 */
+    /**
+     * 锁课次行：把同课次的并发写请求在数据库层串行化。
+     *
+     * 加锁顺序固定为「学员行 → 课次行」，与 CourseScheduleService 的排课 / 取消 / 签到
+     * 完全一致：全局只有一个加锁方向，任何并发事务都按学员 id 排队，杜绝交叉等待成环。
+     */
     private CourseSchedule lockSchedule(Long scheduleId) {
         if (scheduleId == null) {
             throw new BizException("缺少课次 id");
         }
+        CourseSchedule base = scheduleRepo.findById(scheduleId)
+                .orElseThrow(() -> new BizException("课次不存在：" + scheduleId));
+        studentRepo.findByIdForUpdate(base.studentId)
+                .orElseThrow(() -> new BizException("学员档案不存在（id=" + base.studentId
+                        + "），无法操作课后记录，请先确认学员档案"));
         return scheduleRepo.findByIdForUpdate(scheduleId)
                 .orElseThrow(() -> new BizException("课次不存在：" + scheduleId));
     }

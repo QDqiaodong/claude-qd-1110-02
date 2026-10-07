@@ -118,14 +118,27 @@ async function saveSchedule() {
     ElMessage.success('排课成功')
     schDialog.value = false
     await loadSchedules(currentStudent.value.id); emit('changed')
-  } catch (e) { ElMessage.error(e.message) }
+  } catch (e) {
+    ElMessage.error(e.message)
+    // 并发下对端可能已取消/重排，失败也要按最终状态刷新，避免抽屉与列表不一致
+    await loadSchedules(currentStudent.value.id)
+  }
 }
 
 async function cancelSchedule(row) {
-  try { await api.cancelCourseSchedule(row.id); ElMessage.success('已取消'); await loadSchedules(currentStudent.value.id); emit('changed') } catch (e) { ElMessage.error(e.message) }
+  try { await api.cancelCourseSchedule(row.id); ElMessage.success('已取消'); await loadSchedules(currentStudent.value.id); emit('changed') }
+  catch (e) {
+    ElMessage.error(e.message)
+    // 已上课不可取消 / 并发对端已处理：拉取最终状态，避免按钮与真实状态错位
+    await loadSchedules(currentStudent.value.id)
+  }
 }
 async function checkinSchedule(row) {
-  try { await api.checkinCourseSchedule(row.id); ElMessage.success('已签到上课'); await loadSchedules(currentStudent.value.id); emit('changed') } catch (e) { ElMessage.error(e.message) }
+  try { await api.checkinCourseSchedule(row.id); ElMessage.success('已签到上课'); await loadSchedules(currentStudent.value.id); emit('changed') }
+  catch (e) {
+    ElMessage.error(e.message)
+    await loadSchedules(currentStudent.value.id)
+  }
 }
 
 function openRecord(row) {

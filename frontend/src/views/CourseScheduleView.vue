@@ -62,10 +62,25 @@ function resetFilters() {
 }
 
 async function cancel(row) {
-  try { await api.cancelCourseSchedule(row.id); ElMessage.success('已取消'); await load(); emit('changed') } catch (e) { ElMessage.error(e.message) }
+  try {
+    await api.cancelCourseSchedule(row.id)
+    ElMessage.success('已取消，原时段已释放可重新排课')
+    await load(); emit('changed')
+  } catch (e) {
+    ElMessage.error(e.message)
+    // 已上课不可取消 / 并发对端已处理：按后端最终状态刷新，避免列表与抽屉不一致
+    await load()
+  }
 }
 async function checkin(row) {
-  try { await api.checkinCourseSchedule(row.id); ElMessage.success('已签到上课'); await load(); emit('changed') } catch (e) { ElMessage.error(e.message) }
+  try {
+    await api.checkinCourseSchedule(row.id)
+    ElMessage.success('已签到上课')
+    await load(); emit('changed')
+  } catch (e) {
+    ElMessage.error(e.message)
+    await load()
+  }
 }
 
 // ---------------- 课后记录入口 ----------------
