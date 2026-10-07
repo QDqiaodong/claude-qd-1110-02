@@ -1,0 +1,29 @@
+:root {
+  /* 靛青主色 —— 与已建各仓主色均不重复 */
+  --primary: #5C6BC0;
+  --primary-deep: #4A56A0;
+  --primary-soft: #A3ACDD;
+  --primary-wash: #E8EAF6;
+  --ink: #2f3340;
+  --muted: #6b7088;
+  --line: #e3e5f0;
+  --bg: #f3f4fa;
+
+  --el-color-primary: #5C6BC0;
+  --el-color-primary-light-3: #8591D2;
+  --el-color-primary-light-5: #A3ACDD;
+  --el-color-primary-light-7: #C2C8E9;
+  --el-color-primary-light-8: #D1D5EE;
+  --el-color-primary-light-9: #E8EAF6;
+  --el-color-primary-dark-2: #4A56A0;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+}
